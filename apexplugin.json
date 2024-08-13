@@ -1,0 +1,49 @@
+{
+    "name": "Dynamic Row Refresh with Custom Templates",
+    "version": "1.0.0",
+    "description": "A dynamic action plug-in for refreshing individual rows in Oracle APEX based on custom templates. This plug-in dynamically evaluates template conditions and substitutes variables to provide a flexible and powerful row refresh mechanism.",
+    "keywords": [
+        "APEX",
+        "Dynamic Action",
+        "Oracle APEX",
+        "Row Refresh",
+        "Custom Templates",
+        "PL/SQL",
+        "AJAX"
+    ],
+    "homepage": "https://github.com/smart4solutions/apex-plugin-rowrefresh",
+    "bugs": {
+        "url": "https://github.com/smart4solutions/apex-plugin-rowrefresh/issues",
+        "email": "jkiesebrink@smart4solutions.nl"
+    },
+    "license": "MIT",
+    "commercial": "No",
+    "commercially_supported": "Yes",
+    "author": {
+        "name": "Jordy Kiesebrink",
+        "company": "SMART4Solutions",
+        "email": "jkiesebrink@smart4solutions.nl",
+        "url": "http://smart4solutions.nl/",
+        "twitter": "https://x.com/jkiesebrink"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/smart4solutions/apex-plugin-rowrefresh"
+    },
+    "oracle": {
+        "versions": [
+            "19c"
+        ],
+        "apex": {
+            "versions": [
+                "24.1"
+            ],
+            "plugin": {
+                "internalName": "NL.SMART4SOLUTIONS.ROWREFRESH",
+                "type": "dynamic action",
+                "demo": "",
+                "previewImage": "https://raw.githubusercontent.com/smart4solutions/apex-plugin-rowrefresh/master/preview.gif"
+            }
+        }
+    }
+}

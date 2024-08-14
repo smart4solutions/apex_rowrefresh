@@ -56,39 +56,19 @@ create or replace package body apx_plg_rowrefresh_pkg is
 
   function fn_replace_template_vars(i_col_tab  in tt_col_type
                                    ,i_template in clob) return clob is
-    l_result    clob := i_template;
-    l_pattern   varchar2(12) := '#[A-Z0-9_]+#';
-    l_match     varchar2(1000);
-    l_start     number := 1;
-    l_col_name  varchar2(1000);
-    l_col_value varchar2(4000);
+    l_result clob := i_template;
+    l_var    varchar2(1000 char);
   begin
+    l_var := i_col_tab.first;
+  
+    <<substring_loop>>
+    while l_var is not null
     loop
-      l_match := regexp_substr(srcstr     => l_result
-                              ,pattern    => l_pattern
-                              ,position   => l_start
-                              ,occurrence => 1);
-      exit when l_match is null;
-    
-      -- Extract the placeholder name, remove the # symbols
-      l_col_name := substr(l_match
-                          ,2
-                          ,length(l_match) - 2);
-    
-      if i_col_tab.exists(upper(l_col_name))
-      then
-        l_col_value := i_col_tab(upper(l_col_name));
-        l_result    := replace(srcstr => l_result
-                              ,oldsub => l_match
-                              ,newsub => l_col_value);
-      
-        -- Move the start position past the new content
-        l_start := l_start + length(l_col_value) - 1;
-      else
-        -- Skip the placeholder and move past it
-        l_start := l_start + length(l_match);
-      end if;
-    end loop;
+      l_result := replace(srcstr => l_result
+                         ,oldsub => '#' || upper(l_var) || '#'
+                         ,newsub => i_col_tab(l_var));
+      l_var    := i_col_tab.next(l_var);
+    end loop substring_loop;
   
     return l_result;
   end fn_replace_template_vars;

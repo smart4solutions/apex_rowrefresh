@@ -21,24 +21,24 @@ wwv_flow_imp.import_begin (
  p_version_yyyy_mm_dd=>'2024.05.31'
 ,p_release=>'24.1.3'
 ,p_default_workspace_id=>36728649485285263261
-,p_default_application_id=>116877
-,p_default_id_offset=>25447798276862251141
+,p_default_application_id=>30848
+,p_default_id_offset=>38628925294141333017
 ,p_default_owner=>'SMART4SOLUTIONS'
 );
 end;
 /
  
-prompt APPLICATION 116877 - smart4solutions (Working Copy: jordy)
+prompt APPLICATION 30848 - smart4solutions
 --
 -- Application Export:
---   Application:     116877
---   Name:            smart4solutions (Working Copy: jordy)
---   Date and Time:   18:51 Wednesday August 14, 2024
+--   Application:     30848
+--   Name:            smart4solutions
+--   Date and Time:   21:08 Wednesday August 14, 2024
 --   Exported By:     JKIESEBRINK@SMART4SOLUTIONS.NL
 --   Flashback:       0
 --   Export Type:     Component Export
 --   Manifest
---     PLUGIN: 25511046063764227702
+--     PLUGIN: 63247786901976561
 --   Manifest End
 --   Version:         24.1.3
 --   Instance ID:     63113759365424
@@ -52,7 +52,7 @@ end;
 prompt --application/shared_components/plugins/dynamic_action/nl_smart4solutions_rowrefresh
 begin
 wwv_flow_imp_shared.create_plugin(
- p_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63247786901976561)
 ,p_plugin_type=>'DYNAMIC ACTION'
 ,p_name=>'NL_SMART4SOLUTIONS_ROWREFRESH'
 ,p_display_name=>'SMART4Solutions Rowrefresh'
@@ -118,39 +118,19 @@ wwv_flow_imp_shared.create_plugin(
 '',
 'function fn_replace_template_vars(i_col_tab  in tt_col_type',
 '                                 ,i_template in clob) return clob is',
-'    l_result    clob := i_template;',
-'    l_pattern   varchar2(12) := ''#[A-Z0-9_]+#'';',
-'    l_match     varchar2(1000);',
-'    l_start     number := 1;',
-'    l_col_name  varchar2(1000);',
-'    l_col_value varchar2(4000);',
+'    l_result clob := i_template;',
+'    l_var    varchar2(1000 char);',
 'begin',
+'    l_var := i_col_tab.first;',
+'  ',
+'    <<substring_loop>>',
+'    while l_var is not null',
 '    loop',
-'      l_match := regexp_substr(srcstr     => l_result',
-'                              ,pattern    => l_pattern',
-'                              ,position   => l_start',
-'                              ,occurrence => 1);',
-'      exit when l_match is null;',
-'    ',
-'      -- Extract the placeholder name, remove the # symbols',
-'      l_col_name := substr(l_match',
-'                          ,2',
-'                          ,length(l_match) - 2);',
-'    ',
-'      if i_col_tab.exists(upper(l_col_name))',
-'      then',
-'        l_col_value := i_col_tab(upper(l_col_name));',
-'        l_result    := replace(srcstr => l_result',
-'                              ,oldsub => l_match',
-'                              ,newsub => l_col_value);',
-'      ',
-'        -- Move the start position past the new content',
-'        l_start := l_start + length(l_col_value) - 1;',
-'      else',
-'        -- Skip the placeholder and move past it',
-'        l_start := l_start + length(l_match);',
-'      end if;',
-'    end loop;',
+'      l_result := replace(srcstr => l_result',
+'                         ,oldsub => ''#'' || upper(l_var) || ''#''',
+'                         ,newsub => i_col_tab(l_var));',
+'      l_var    := i_col_tab.next(l_var);',
+'    end loop substring_loop;',
 '  ',
 '    return l_result;',
 'end fn_replace_template_vars;',
@@ -315,21 +295,21 @@ wwv_flow_imp_shared.create_plugin(
 ,p_ajax_function=>'fn_refresh_row'
 ,p_standard_attributes=>'BUTTON:REGION:JQUERY_SELECTOR:TRIGGERING_ELEMENT:REQUIRED:ONLOAD:STOP_EXECUTION_ON_ERROR:WAIT_FOR_RESULT'
 ,p_substitute_attributes=>true
-,p_version_scn=>15553867750000
+,p_version_scn=>15553876732881
 ,p_subscribe_plugin_settings=>true
 ,p_version_identifier=>'1.0.1'
-,p_about_url=>'https://apex.oracle.com/pls/apex/f?p=smart4solutions:s4srowrefresh'
+,p_about_url=>'https://apex.oracle.com/pls/apex/r/s4s/smart4solutions/apex_rowrefresh'
 ,p_files_version=>121
 );
 wwv_flow_imp_shared.create_plugin_attr_group(
- p_id=>wwv_flow_imp.id(25511185221756918341)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63386944894667200)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_title=>'Source'
 ,p_display_sequence=>1
 );
 wwv_flow_imp_shared.create_plugin_attribute(
- p_id=>wwv_flow_imp.id(25511066195464627658)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63267918602376517)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>1
 ,p_display_sequence=>10
@@ -341,8 +321,8 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_help_text=>'A jQuery selector that targets the row closest to the triggering element. The plug-in searches for the first occurrence of this selector starting from the triggering element.'
 );
 wwv_flow_imp_shared.create_plugin_attribute(
- p_id=>wwv_flow_imp.id(25511066909165629037)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63268632303377896)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>2
 ,p_display_sequence=>30
@@ -354,8 +334,8 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_help_text=>'The name of the template used for rendering the row. The correct row template is selected based on the evaluated PL/SQL expression (template condition).'
 );
 wwv_flow_imp_shared.create_plugin_attribute(
- p_id=>wwv_flow_imp.id(25511192913926011403)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63394637063760262)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>3
 ,p_display_sequence=>10
@@ -363,13 +343,13 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_attribute_type=>'SQL'
 ,p_is_required=>true
 ,p_is_translatable=>false
-,p_attribute_group_id=>wwv_flow_imp.id(25511185221756918341)
+,p_attribute_group_id=>wwv_flow_imp.id(63386944894667200)
 ,p_examples=>'SELECT * FROM my_table WHERE id = :P1_ITEM1'
 ,p_help_text=>'A PL/SQL block that returns the specific row data. Ensure that all bind or substitution variables used in the template condition are part of this query.'
 );
 wwv_flow_imp_shared.create_plugin_attribute(
- p_id=>wwv_flow_imp.id(25511722417261294851)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63924140399043710)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>4
 ,p_display_sequence=>20
@@ -377,13 +357,13 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_attribute_type=>'PAGE ITEMS'
 ,p_is_required=>false
 ,p_is_translatable=>false
-,p_attribute_group_id=>wwv_flow_imp.id(25511185221756918341)
+,p_attribute_group_id=>wwv_flow_imp.id(63386944894667200)
 ,p_examples=>'P1_ITEM1,P1_ITEM2'
 ,p_help_text=>'A comma-separated list of page items to submit to the server for session state management. Ensure all necessary page items used in the query and conditions are included here.'
 );
 wwv_flow_imp_shared.create_plugin_attribute(
- p_id=>wwv_flow_imp.id(25512988954283064269)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(65190677420813128)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>5
 ,p_display_sequence=>20
@@ -395,8 +375,8 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_help_text=>'The name of the page-item used for identifying the row. The plug-in will go through all data attributes of the matched items for the jQuery Selector to identify the correct row.'
 );
 wwv_flow_imp_shared.create_plugin_event(
- p_id=>wwv_flow_imp.id(25511053578090410370)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63255301228159229)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_name=>'after_refresh'
 ,p_display_name=>'Ajax Callback for Refresh Row'
 );
@@ -435,8 +415,8 @@ end;
 /
 begin
 wwv_flow_imp_shared.create_plugin_file(
- p_id=>wwv_flow_imp.id(25511053975658447980)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(63255698796196839)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_file_name=>'main.js'
 ,p_mime_type=>'text/javascript'
 ,p_file_charset=>'utf-8'
@@ -459,8 +439,8 @@ end;
 /
 begin
 wwv_flow_imp_shared.create_plugin_file(
- p_id=>wwv_flow_imp.id(25551019428372346060)
-,p_plugin_id=>wwv_flow_imp.id(25511046063764227702)
+ p_id=>wwv_flow_imp.id(103221151510094919)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_file_name=>'main.min.js'
 ,p_mime_type=>'text/javascript'
 ,p_file_charset=>'utf-8'

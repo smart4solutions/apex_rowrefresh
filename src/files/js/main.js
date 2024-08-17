@@ -1,6 +1,4 @@
-if (typeof s4s === 'undefined') {
-    var s4s = {};
-}
+var s4s = s4s || {}
 s4s.apex = s4s.apex || {};
 
 s4s.apex.rowrefresh = {
@@ -11,50 +9,56 @@ s4s.apex.rowrefresh = {
 
     // Handle the change event
     'handleChange': function (action, element) {
-        var elementSelector = action.attribute01;
-        var rowIdentifier = apex.item(action.attribute05).getValue();
-        var matchedElement = null;
+        let elementSelector = action.attribute01;
+        let rowIdentifier = apex.item(action.attribute05).getValue();
+        let showSpinner = action.attribute06;
+        let spinnerElement, matchedElement, matchedAttribute = null;
 
         // Convert the page items attribute to a selector string
-        var pageItemsSelector = action.attribute04
+        let pageItemsSelector = action.attribute04
             .split(',')
             .map(function (item) { return '#' + item.trim(); })
             .join(',');
 
-        // Make an AJAX call to fetch the data
-        s4s.apex.rowrefresh.fetchRowData(action.ajaxIdentifier, pageItemsSelector).then(function (data) {
-            if (rowIdentifier) {
-                // Iterate over each matching element when the row identifier is available
-                document.querySelectorAll(elementSelector).forEach(function (element) {
-                    // Loop through all data attributes to find a match
-                    for (var key in element.dataset) {
-                        if (element.dataset[key] === rowIdentifier) {
-                            matchedElement = element;
-                            break;
-                        }
+        if (rowIdentifier) {
+            // Iterate over each matching element when the row identifier is available
+            document.querySelectorAll(elementSelector).forEach(function (element) {
+                // Loop through all data attributes to find a match
+                for (let key in element.dataset) {
+                    if (element.dataset[key] === rowIdentifier) {
+                        matchedElement = element;
+                        matchedAttribute = key;
+                        return true;
                     }
+                }
+            });
+        } else {
+            // Fallback to the closest matching element if no identifier is provided
+            matchedElement = element.closest(elementSelector);
+        }
 
-                    if (matchedElement) {
-                        return false;
-                    }
-                });
-            } else {
-                // Fallback to the closest matching element if no identifier is provided
-                matchedElement = element.closest(elementSelector);
-            }
+        if (showSpinner === 'Y') {
+            spinnerElement = apex.util.showSpinner(matchedElement ? '.' + matchedElement.classList[0] + (rowIdentifier ? '[data-' + matchedAttribute + '="' + rowIdentifier + '"]' : '') : null);
+        }
 
-            if (matchedElement) {
+        if (matchedElement) {
+            // Make an AJAX call to fetch the data
+            s4s.apex.rowrefresh.fetchRowData(action.ajaxIdentifier, pageItemsSelector).then(function (data) {
                 // Add apex event for successful refresh
                 apex.event.trigger(matchedElement, 'after_refresh');
 
                 // Replace the element with the new data
                 matchedElement.outerHTML = data.row_html;
-            } else {
-                console.error('Element not found for selector: ', elementSelector);
-            }
-        }).catch(function (error) {
-            console.table(error);
-        });
+            }).catch(function (error) {
+                console.error('Error fetching row data:', error);
+            }).finally(function () {
+                if (showSpinner === 'Y' && spinnerElement) {
+                    spinnerElement.remove();
+                }
+            });
+        } else {
+            console.error('Element not found for selector: ', elementSelector);
+        }
     },
 
     // Fetch the row data using AJAX

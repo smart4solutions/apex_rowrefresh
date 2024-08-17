@@ -16,6 +16,7 @@ create or replace package body apx_plg_rowrefresh_pkg is
     l_render_result.attribute_03        := p_dynamic_action.attribute_03; -- Source: SQL Query
     l_render_result.attribute_04        := p_dynamic_action.attribute_04; -- Source: Items to submit
     l_render_result.attribute_05        := p_dynamic_action.attribute_05; -- Row Identifier
+    l_render_result.attribute_06        := p_dynamic_action.attribute_06; -- Show Spinner
   
     return l_render_result;
   exception

@@ -20,25 +20,30 @@ s4s.apex.rowrefresh = {
             .map(function (item) { return '#' + item.trim(); })
             .join(',');
 
+        console.debug('handleChange: submitting page items', pageItemsSelector);
+
         if (rowIdentifier) {
             // Iterate over each matching element when the row identifier is available
             document.querySelectorAll(elementSelector).forEach(function (element) {
                 // Loop through all data attributes to find a match
-                for (let key in element.dataset) {
-                    if (element.dataset[key] === rowIdentifier) {
+                for (let attr of element.attributes) {
+                    if (attr.name.startsWith('data-') && attr.value === rowIdentifier) {
                         matchedElement = element;
-                        matchedAttribute = key;
-                        return true;
+                        matchedAttribute = attr.name;
+                        return true;  // Breaks the loop
                     }
                 }
             });
+
+            if (showSpinner === 'Y') {
+                let selector = matchedElement ? `.${matchedElement.classList[0]}[${matchedAttribute}="${rowIdentifier}"]` : null;
+                console.debug('handleChange: apply spinner on', selector);
+
+                spinnerElement = apex.util.showSpinner(selector);
+            }
         } else {
             // Fallback to the closest matching element if no identifier is provided
             matchedElement = element.closest(elementSelector);
-        }
-
-        if (showSpinner === 'Y') {
-            spinnerElement = apex.util.showSpinner(matchedElement ? '.' + matchedElement.classList[0] + (rowIdentifier ? '[data-' + matchedAttribute + '="' + rowIdentifier + '"]' : '') : null);
         }
 
         if (matchedElement) {

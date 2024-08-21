@@ -13,11 +13,15 @@ create or replace package apx_plg_rowrefresh_pkg is
 
   function fetch_cursor_data(i_cursor in out sys_refcursor) return tt_col_type;
 
+  function apply_column_templates(i_column_map in tt_col_type
+                                 ,i_template   in clob
+                                 ,i_static_id  in varchar2) return clob;
+
   function replace_template_vars(i_column_map in tt_col_type
                                 ,i_template   in clob) return clob;
 
-  function evaluate_condition(i_condition  in varchar2
-                             ,i_column_map in tt_col_type) return boolean;
+  function evaluate_template_condition(i_condition  in varchar2
+                                      ,i_column_map in tt_col_type) return boolean;
 
   function get_template(i_template_name in varchar2
                        ,i_column_map    in tt_col_type) return clob;

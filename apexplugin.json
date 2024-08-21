@@ -1,6 +1,6 @@
 {
     "name": "Dynamic Row Refresh with Custom Templates",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "description": "A dynamic action plug-in for refreshing individual rows in Oracle APEX based on custom templates. This plug-in dynamically evaluates template conditions and substitutes variables to provide a flexible and powerful row refresh mechanism.",
     "keywords": [
         "APEX",

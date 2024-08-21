@@ -33,7 +33,7 @@ prompt APPLICATION 30848 - smart4solutions
 -- Application Export:
 --   Application:     30848
 --   Name:            smart4solutions
---   Date and Time:   15:33 Wednesday August 21, 2024
+--   Date and Time:   22:09 Wednesday August 21, 2024
 --   Exported By:     JKIESEBRINK@SMART4SOLUTIONS.NL
 --   Flashback:       0
 --   Export Type:     Component Export
@@ -79,6 +79,7 @@ wwv_flow_imp_shared.create_plugin(
 '    l_render_result.attribute_04        := p_dynamic_action.attribute_04; -- Source: Items to submit',
 '    l_render_result.attribute_05        := p_dynamic_action.attribute_05; -- Row Identifier',
 '    l_render_result.attribute_06        := p_dynamic_action.attribute_06; -- Show Spinner',
+'    l_render_result.attribute_07        := p_dynamic_action.attribute_07; -- Region Static ID',
 '  ',
 '    return l_render_result;',
 '  exception',
@@ -130,29 +131,59 @@ wwv_flow_imp_shared.create_plugin(
 '',
 '  function replace_template_vars(i_column_map in tt_col_type',
 '                                ,i_template   in clob) return clob is',
-'    l_result clob := i_template;',
-'    l_var    varchar2(1000 char);',
+'    l_html clob := i_template;',
+'    l_var  varchar2(1000 char);',
 '  begin',
 '    l_var := i_column_map.first;',
 '  ',
 '    <<replace_vars_loop>>',
 '    while l_var is not null',
 '    loop',
-'      l_result := replace(srcstr => l_result',
-'                         ,oldsub => ''#'' || upper(l_var) || ''#''',
-'                         ,newsub => i_column_map(l_var));',
-'      l_var    := i_column_map.next(l_var);',
+'      l_html := replace(srcstr => l_html',
+'                       ,oldsub => ''#'' || upper(l_var) || ''#''',
+'                       ,newsub => i_column_map(l_var));',
+'      l_var  := i_column_map.next(l_var);',
 '    end loop replace_vars_loop;',
 '  ',
-'    return l_result;',
+'    return l_html;',
 '  exception',
 '    when others then',
 '      apex_debug.error(''Error in replace_template_vars: '' || sqlerrm);',
 '      raise;',
 '  end replace_template_vars;',
 '',
-'  function evaluate_condition(i_condition  in varchar2',
-'                             ,i_column_map in tt_col_type) return boolean is',
+'  function apply_column_templates(i_column_map in tt_col_type',
+'                                 ,i_template   in clob',
+'                                 ,i_static_id  in varchar2) return clob is',
+'    cursor c_cols(cp_static_id in varchar2) is',
+'      select cols.column_alias',
+'            ,cols.html_expression',
+'      from   apex_application_page_rpt_cols cols',
+'      join   apex_application_page_regions regs on regs.region_id = cols.region_id',
+'      where  regs.static_id = cp_static_id',
+'      and    cols.application_id = apex_application.g_flow_id',
+'      and    cols.page_id = apex_application.g_flow_step_id;',
+'  ',
+'    l_html_expr_map tt_col_type := new tt_col_type();',
+'  begin',
+'    <<replace_expression_loop>>',
+'    for r_column in c_cols(cp_static_id => i_static_id)',
+'    loop',
+'      l_html_expr_map(r_column.column_alias) := replace_template_vars(i_column_map => i_column_map',
+'                                                                     ,i_template   => coalesce(r_column.html_expression',
+'                                                                                              ,i_column_map(r_column.column_alias)));',
+'    end loop replace_expression_loop;',
+'  ',
+'    return replace_template_vars(i_column_map => l_html_expr_map',
+'                                ,i_template   => i_template);',
+'  exception',
+'    when others then',
+'      apex_debug.error(''Error in apply_column_templates: '' || sqlerrm);',
+'      raise;',
+'  end apply_column_templates;',
+'',
+'  function evaluate_template_condition(i_condition  in varchar2',
+'                                      ,i_column_map in tt_col_type) return boolean is',
 '    l_cond      varchar2(4000 char);',
 '    l_result    boolean;',
 '    l_cursor_id integer;',
@@ -212,43 +243,48 @@ wwv_flow_imp_shared.create_plugin(
 '    when others then',
 '      apex_debug.error(''Error in evaluate_condition: '' || sqlerrm);',
 '      raise;',
-'  end evaluate_condition;',
+'  end evaluate_template_condition;',
 '',
 '  function get_template(i_template_name in varchar2',
 '                       ,i_column_map    in tt_col_type) return clob is',
+'    cursor c_temp(cp_template_name in varchar2) is',
+'      select temp.col_template1',
+'            ,temp.col_template_condition1',
+'            ,temp.col_template2',
+'            ,temp.col_template_condition2',
+'            ,temp.col_template3',
+'            ,temp.col_template_condition3',
+'            ,temp.col_template4',
+'            ,temp.col_template_condition4',
+'      from   apex_application_temp_report temp',
+'      where  temp.template_name = i_template_name',
+'      and    temp.application_id = apex_application.g_flow_id;',
+'  ',
+'    r_template c_temp%rowtype;',
 '    l_template clob;',
 '  begin',
-'    <<template_search_loop>>',
-'    for r_temp in (select temp.col_template1',
-'                         ,temp.col_template_condition1',
-'                         ,temp.col_template2',
-'                         ,temp.col_template_condition2',
-'                         ,temp.col_template3',
-'                         ,temp.col_template_condition3',
-'                         ,temp.col_template4',
-'                         ,temp.col_template_condition4',
-'                   from   apex_application_temp_report temp',
-'                   where  temp.template_name = i_template_name',
-'                   and    temp.application_id = apex_application.g_flow_id)',
-'    loop',
-'      if evaluate_condition(i_condition  => r_temp.col_template_condition1',
-'                           ,i_column_map => i_column_map)',
-'      then',
-'        l_template := r_temp.col_template1;',
-'      elsif evaluate_condition(i_condition  => r_temp.col_template_condition2',
-'                              ,i_column_map => i_column_map)',
-'      then',
-'        l_template := r_temp.col_template2;',
-'      elsif evaluate_condition(i_condition  => r_temp.col_template_condition3',
-'                              ,i_column_map => i_column_map)',
-'      then',
-'        l_template := r_temp.col_template3;',
-'      elsif evaluate_condition(i_condition  => r_temp.col_template_condition4',
-'                              ,i_column_map => i_column_map)',
-'      then',
-'        l_template := r_temp.col_template4;',
-'      end if;',
-'    end loop template_search_loop;',
+'    open c_temp(cp_template_name => i_template_name);',
+'    fetch c_temp',
+'      into r_template;',
+'    close c_temp;',
+'  ',
+'    if evaluate_template_condition(i_condition  => r_template.col_template_condition1',
+'                                  ,i_column_map => i_column_map)',
+'    then',
+'      l_template := r_template.col_template1;',
+'    elsif evaluate_template_condition(i_condition  => r_template.col_template_condition2',
+'                                     ,i_column_map => i_column_map)',
+'    then',
+'      l_template := r_template.col_template2;',
+'    elsif evaluate_template_condition(i_condition  => r_template.col_template_condition3',
+'                                     ,i_column_map => i_column_map)',
+'    then',
+'      l_template := r_template.col_template3;',
+'    elsif evaluate_template_condition(i_condition  => r_template.col_template_condition4',
+'                                     ,i_column_map => i_column_map)',
+'    then',
+'      l_template := r_template.col_template4;',
+'    end if;',
 '  ',
 '    return l_template;',
 '  exception',
@@ -297,8 +333,9 @@ wwv_flow_imp_shared.create_plugin(
 '                              ,i_column_map    => l_column_map);',
 '  ',
 '    -- Replace template variables with values from key-value pairs',
-'    l_row_html := replace_template_vars(i_column_map => l_column_map',
-'                                       ,i_template   => l_template);',
+'    l_row_html := apply_column_templates(i_column_map => l_column_map',
+'                                        ,i_template   => l_template',
+'                                        ,i_static_id  => p_dynamic_action.attribute_07);',
 '  ',
 '    -- Write the result as JSON',
 '    apex_json.open_object;',
@@ -312,6 +349,10 @@ wwv_flow_imp_shared.create_plugin(
 '                   ,p_value => p_dynamic_action.attribute_04);',
 '    apex_json.write(p_name  => ''row_identifier''',
 '                   ,p_value => p_dynamic_action.attribute_05);',
+'    apex_json.write(p_name  => ''show_spinner''',
+'                   ,p_value => p_dynamic_action.attribute_06);',
+'    apex_json.write(p_name  => ''region_static_id''',
+'                   ,p_value => p_dynamic_action.attribute_07);',
 '    apex_json.write(p_name       => ''row_html''',
 '                   ,p_value      => l_row_html',
 '                   ,p_write_null => true);',
@@ -322,16 +363,15 @@ wwv_flow_imp_shared.create_plugin(
 '    when others then',
 '      apex_debug.error(''Error in refresh_row: '' || sqlerrm);',
 '      raise;',
-'  end refresh_row;',
-''))
+'  end refresh_row;'))
 ,p_api_version=>1
 ,p_render_function=>'init'
 ,p_ajax_function=>'refresh_row'
 ,p_standard_attributes=>'BUTTON:REGION:JQUERY_SELECTOR:TRIGGERING_ELEMENT:REQUIRED:ONLOAD:STOP_EXECUTION_ON_ERROR:WAIT_FOR_RESULT'
 ,p_substitute_attributes=>true
-,p_version_scn=>15556163867099
+,p_version_scn=>15556254492458
 ,p_subscribe_plugin_settings=>true
-,p_version_identifier=>'1.1.1'
+,p_version_identifier=>'1.2.0'
 ,p_about_url=>'https://apex.oracle.com/pls/apex/r/s4s/smart4solutions/apex_rowrefresh'
 ,p_files_version=>157
 );
@@ -346,7 +386,7 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>1
-,p_display_sequence=>10
+,p_display_sequence=>20
 ,p_prompt=>'Row Selector (jQuery Selector)'
 ,p_attribute_type=>'TEXT'
 ,p_is_required=>true
@@ -359,7 +399,7 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>2
-,p_display_sequence=>30
+,p_display_sequence=>50
 ,p_prompt=>'Template Name'
 ,p_attribute_type=>'TEXT'
 ,p_is_required=>true
@@ -400,7 +440,7 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>5
-,p_display_sequence=>20
+,p_display_sequence=>30
 ,p_prompt=>'Row Identifier'
 ,p_attribute_type=>'PAGE ITEM'
 ,p_is_required=>false
@@ -413,7 +453,7 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
 ,p_attribute_scope=>'COMPONENT'
 ,p_attribute_sequence=>6
-,p_display_sequence=>60
+,p_display_sequence=>40
 ,p_prompt=>'Show Spinner'
 ,p_attribute_type=>'CHECKBOX'
 ,p_is_required=>false
@@ -423,6 +463,18 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_depending_on_has_to_exist=>true
 ,p_depending_on_condition_type=>'NOT_NULL'
 ,p_help_text=>'Shows a spinner on the matched element before replacing the identified row, removes it when it''s replaced. Only possible when `Row Indentifier` is provided.'
+);
+wwv_flow_imp_shared.create_plugin_attribute(
+ p_id=>wwv_flow_imp.id(28147820253911718824)
+,p_plugin_id=>wwv_flow_imp.id(63247786901976561)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>7
+,p_display_sequence=>10
+,p_prompt=>'Region Static ID'
+,p_attribute_type=>'TEXT'
+,p_is_required=>true
+,p_is_translatable=>false
+,p_help_text=>'The Static ID from the region where the report is rendered in. The plug-in needs it to find metadata set for the columns, e.g. HTML Expressions (without Template Directives).'
 );
 wwv_flow_imp_shared.create_plugin_event(
  p_id=>wwv_flow_imp.id(63255301228159229)

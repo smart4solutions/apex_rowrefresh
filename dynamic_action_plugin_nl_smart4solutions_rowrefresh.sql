@@ -33,7 +33,7 @@ prompt APPLICATION 30848 - smart4solutions
 -- Application Export:
 --   Application:     30848
 --   Name:            smart4solutions
---   Date and Time:   20:03 Saturday August 17, 2024
+--   Date and Time:   15:33 Wednesday August 21, 2024
 --   Exported By:     JKIESEBRINK@SMART4SOLUTIONS.NL
 --   Flashback:       0
 --   Export Type:     Component Export
@@ -228,7 +228,8 @@ wwv_flow_imp_shared.create_plugin(
 '                         ,temp.col_template4',
 '                         ,temp.col_template_condition4',
 '                   from   apex_application_temp_report temp',
-'                   where  temp.template_name = i_template_name)',
+'                   where  temp.template_name = i_template_name',
+'                   and    temp.application_id = apex_application.g_flow_id)',
 '    loop',
 '      if evaluate_condition(i_condition  => r_temp.col_template_condition1',
 '                           ,i_column_map => i_column_map)',
@@ -328,9 +329,9 @@ wwv_flow_imp_shared.create_plugin(
 ,p_ajax_function=>'refresh_row'
 ,p_standard_attributes=>'BUTTON:REGION:JQUERY_SELECTOR:TRIGGERING_ELEMENT:REQUIRED:ONLOAD:STOP_EXECUTION_ON_ERROR:WAIT_FOR_RESULT'
 ,p_substitute_attributes=>true
-,p_version_scn=>15554815082905
+,p_version_scn=>15556163867099
 ,p_subscribe_plugin_settings=>true
-,p_version_identifier=>'1.1.0'
+,p_version_identifier=>'1.1.1'
 ,p_about_url=>'https://apex.oracle.com/pls/apex/r/s4s/smart4solutions/apex_rowrefresh'
 ,p_files_version=>157
 );
@@ -421,6 +422,7 @@ wwv_flow_imp_shared.create_plugin_attribute(
 ,p_depending_on_attribute_id=>wwv_flow_imp.id(65190677420813128)
 ,p_depending_on_has_to_exist=>true
 ,p_depending_on_condition_type=>'NOT_NULL'
+,p_help_text=>'Shows a spinner on the matched element before replacing the identified row, removes it when it''s replaced. Only possible when `Row Indentifier` is provided.'
 );
 wwv_flow_imp_shared.create_plugin_event(
  p_id=>wwv_flow_imp.id(63255301228159229)

@@ -166,7 +166,8 @@ create or replace package body apx_plg_rowrefresh_pkg is
                          ,temp.col_template4
                          ,temp.col_template_condition4
                    from   apex_application_temp_report temp
-                   where  temp.template_name = i_template_name)
+                   where  temp.template_name = i_template_name
+                   and    temp.application_id = apex_application.g_flow_id)
     loop
       if evaluate_condition(i_condition  => r_temp.col_template_condition1
                            ,i_column_map => i_column_map)

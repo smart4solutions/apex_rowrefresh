@@ -1,6 +1,6 @@
 {
     "name": "Dynamic Row Refresh with Custom Templates",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "A dynamic action plug-in for refreshing individual rows in Oracle APEX based on custom templates. This plug-in dynamically evaluates template conditions and substitutes variables to provide a flexible and powerful row refresh mechanism.",
     "keywords": [
         "APEX",
@@ -24,7 +24,7 @@
         "company": "SMART4Solutions",
         "email": "jkiesebrink@smart4solutions.nl",
         "url": "http://smart4solutions.nl/",
-        "twitter": "https://x.com/jkiesebrink"
+        "twitter": "jkiesebrink"
     },
     "repository": {
         "type": "git",

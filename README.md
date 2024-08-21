@@ -18,9 +18,10 @@ This Oracle APEX Dynamic Action plug-in allows you to refresh individual rows in
 | Attribute Name          | Description                                                                                         | Example                                                   |
 |-------------------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | **SQL Query**           | A PL/SQL block that returns the specific row data. Ensure that all bind or substitution variables used in the template condition are part of this query. | `SELECT * FROM my_table WHERE id = :P1_ITEM1`               |
-| **Template Name**            | The name of the template used for rendering the row. The correct row template is selected based on the evaluated PL/SQL expression (template condition). | `'My Custom Template'`                                    |
+| **Template Name**            | The name of the template used for rendering the row. The correct row template is selected based on the evaluated PL/SQL expression (template condition). | `My Custom Template`                                    |
 | **jQuery Selector**      | A jQuery selector that targets the row closest to the triggering element. The plug-in searches for the first occurrence of this selector starting from the triggering element. | `tr[data-row-id]`                                         |
 | **Row Identifier**            | The name of the page-item used for identifying the row. The plug-in will go through all data attributes of the matched items for the jQuery Selector to identify the correct row. | `P1_ITEM1`                                    |
+| **Show Spinner**            | Shows a spinner on the matched element before replacing the identified row, removes it when it's replaced. Only possible when `Row Indentifier` is provided. | `Yes/No`                                   |
 | **Items to Submit** | A comma-separated list of page items to submit to the server for session state management. Ensure all necessary page items used in the query and conditions are included here. | `P1_ITEM1,P1_ITEM2`                                       |
 
 ## Plug-in Settings

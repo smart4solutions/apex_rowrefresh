@@ -16,8 +16,8 @@ create or replace package body apx_plg_rowrefresh_pkg is
     l_render_result.attribute_03        := p_dynamic_action.attribute_03; -- Source: SQL Query
     l_render_result.attribute_04        := p_dynamic_action.attribute_04; -- Source: Items to submit
     l_render_result.attribute_05        := p_dynamic_action.attribute_05; -- Row Identifier
-    l_render_result.attribute_06        := p_dynamic_action.attribute_06; -- Show Spinner
     l_render_result.attribute_07        := p_dynamic_action.attribute_07; -- Region Static ID
+    l_render_result.attribute_08        := p_dynamic_action.attribute_08; -- Extra options
   
     return l_render_result;
   exception
@@ -241,6 +241,7 @@ create or replace package body apx_plg_rowrefresh_pkg is
     l_column_map  tt_col_type;
     l_row_html    clob;
     l_template    clob;
+    l_var         varchar2(1000 char);
   begin
     -- Open the cursor for the selected row
     l_cursor_id := dbms_sql.open_cursor;
@@ -277,6 +278,7 @@ create or replace package body apx_plg_rowrefresh_pkg is
   
     -- Write the result as JSON
     apex_json.open_object;
+    apex_json.open_object(p_name => 'plugin_attributes'); -- {
     apex_json.write(p_name  => 'jquery_selector'
                    ,p_value => p_dynamic_action.attribute_01);
     apex_json.write(p_name  => 'template_name'
@@ -287,14 +289,29 @@ create or replace package body apx_plg_rowrefresh_pkg is
                    ,p_value => p_dynamic_action.attribute_04);
     apex_json.write(p_name  => 'row_identifier'
                    ,p_value => p_dynamic_action.attribute_05);
-    apex_json.write(p_name  => 'show_spinner'
-                   ,p_value => p_dynamic_action.attribute_06);
     apex_json.write(p_name  => 'region_static_id'
                    ,p_value => p_dynamic_action.attribute_07);
+    apex_json.write(p_name  => 'extra_options'
+                   ,p_value => p_dynamic_action.attribute_08);
+    apex_json.close_object; -- }
+  
+    apex_json.open_object(p_name => 'row_data'); -- {
+    l_var := l_column_map.first;
+  
+    <<column_data_loop>>
+    while l_var is not null
+    loop
+      apex_json.write(p_name       => l_var
+                     ,p_value      => l_column_map(l_var)
+                     ,p_write_null => true);
+      l_var := l_column_map.next(l_var);
+    end loop column_data_loop;
+    apex_json.close_object; -- }
+  
     apex_json.write(p_name       => 'row_html'
                    ,p_value      => l_row_html
                    ,p_write_null => true);
-    apex_json.close_object;
+    apex_json.close_object; -- }
   
     return l_ajax_result;
   exception

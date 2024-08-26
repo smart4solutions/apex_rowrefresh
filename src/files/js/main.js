@@ -1,4 +1,4 @@
-var s4s = s4s || {}
+var s4s = s4s || {};
 s4s.apex = s4s.apex || {};
 
 s4s.apex.rowrefresh = {
@@ -8,56 +8,30 @@ s4s.apex.rowrefresh = {
     },
 
     // Handle the change event
-    'handleChange': function (action, element) {
+    'handleChange': function (action, triggeringElement) {
         let elementSelector = action.attribute01;
+        let pageItems = action.attribute04;
         let rowIdentifier = apex.item(action.attribute05).getValue();
-        let showSpinner = action.attribute06;
-        let spinnerElement, matchedElement, matchedAttribute = null;
+        let extraOptions = action.attribute08;
+        let [matchedElement, matchedAttribute] = this.getMatchedElement(elementSelector, rowIdentifier, triggeringElement);
 
-        // Convert the page items attribute to a selector string
-        let pageItemsSelector = action.attribute04
-            .split(',')
-            .map(function (item) { return '#' + item.trim(); })
-            .join(',');
-
-        console.debug('handleChange: submitting page items', pageItemsSelector);
-
-        if (rowIdentifier) {
-            // Iterate over each matching element when the row identifier is available
-            document.querySelectorAll(elementSelector).forEach(function (element) {
-                // Loop through all data attributes to find a match
-                for (let attr of element.attributes) {
-                    if (attr.name.startsWith('data-') && attr.value === rowIdentifier) {
-                        matchedElement = element;
-                        matchedAttribute = attr.name;
-                        return true;  // Breaks the loop
-                    }
-                }
-            });
-
-            if (showSpinner === 'Y') {
-                let selector = matchedElement ? `.${matchedElement.classList[0]}[${matchedAttribute}="${rowIdentifier}"]` : null;
-                console.debug('handleChange: apply spinner on', selector);
-
-                spinnerElement = apex.util.showSpinner(selector);
-            }
-        } else {
-            // Fallback to the closest matching element if no identifier is provided
-            matchedElement = element.closest(elementSelector);
+        if (extraOptions.includes('SHOW_SPINNER') && matchedElement) {
+            var spinnerElement = this.showSpinner(matchedElement, matchedAttribute, rowIdentifier);
         }
 
         if (matchedElement) {
-            // Make an AJAX call to fetch the data
-            s4s.apex.rowrefresh.fetchRowData(action.ajaxIdentifier, pageItemsSelector).then(function (data) {
-                // Add apex event for successful refresh
-                apex.event.trigger(matchedElement, 'after_refresh');
-
-                // Replace the element with the new data
+            this.fetchRowData(action.ajaxIdentifier, pageItems).then(function (data) {
+                if (extraOptions.includes('USE_HANDLEBARS')) {
+                    data.row_html = s4s.apex.rowrefresh.renderTemplate(data.row_html, data.row_data);
+                }
+                
                 matchedElement.outerHTML = data.row_html;
+
+                apex.event.trigger(matchedElement, 'after_refresh');
             }).catch(function (error) {
                 console.error('Error fetching row data:', error);
             }).finally(function () {
-                if (showSpinner === 'Y' && spinnerElement) {
+                if (extraOptions.includes('SHOW_SPINNER') && spinnerElement) {
                     spinnerElement.remove();
                 }
             });
@@ -70,15 +44,51 @@ s4s.apex.rowrefresh = {
     'fetchRowData': function (ajaxIdentifier, pageItems) {
         return new Promise(function (resolve, reject) {
             apex.server.plugin(ajaxIdentifier, {
-                pageItems: pageItems
+                pageItems: pageItems.split(',').map(function (item) {
+                    return '#' + item.trim();
+                }).join(',')
             }, {
-                success: function (data) {
-                    resolve(data);
-                },
-                error: function (error) {
-                    reject(error);
-                }
+                success: resolve,
+                error: reject
             });
         });
+    },
+
+    // Get the matched element based on the selector and row identifier
+    'getMatchedElement': function (elementSelector, rowIdentifier, triggeringElement) {
+        let matchedElement, matchedAttribute = null;
+    
+        if (rowIdentifier) {
+            document.querySelectorAll(elementSelector).forEach(function (element) {
+                for (let attr of element.attributes) {
+                    if (attr.name.startsWith('data-') && attr.value === rowIdentifier) {
+                        matchedElement = element;
+                        matchedAttribute = attr.name;
+                        return;  // Exit the loop early when a match is found
+                    }
+                }
+            });
+        } else {
+            matchedElement = triggeringElement.closest(elementSelector);
+        }
+    
+        return [matchedElement, matchedAttribute];
+    },
+
+    // Show a spinner on the matched element
+    'showSpinner': function (matchedElement, matchedAttribute, rowIdentifier) {
+        let spinnerSelector = `.${matchedElement.classList[0]}[${matchedAttribute}="${rowIdentifier}"]`;
+        return apex.util.showSpinner(spinnerSelector);
+    },
+
+    // Render the template with Handlebars
+    'renderTemplate': function (template, dataObject) {
+        let handlebarsTemplate = template
+            .replace(/{if (.*?)\/}/g, '{{#if $1}}')
+            .replace(/{else\/}/g, '{{else}}')
+            .replace(/{endif\/}/g, '{{/if}}');
+
+        let compiledTemplate = Handlebars.compile(handlebarsTemplate);
+        return compiledTemplate(dataObject);
     }
-}
+};
